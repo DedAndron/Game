@@ -12,6 +12,7 @@ namespace SystemPrograming
         //static Mutex mutex = new Mutex(false, "Global\\MyLogMutex");
 
         //task1
+        static ConcurrentStack<string> actions = new ConcurrentStack<string>();
         static void Main(string[] args)
         {
             ConcurrentQueue<Client> clients = new ConcurrentQueue<Client>();
@@ -35,6 +36,43 @@ namespace SystemPrograming
             });
             mainthread.Start();
             mainthread.Join();
+
+
+            Console.WriteLine("Adding actions from different threads...");
+            for (int i = 0; i < 3; i++)
+            {
+                int threadId = i;
+
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    actions.Push($"Thread {threadId}: opened document");
+                    Thread.Sleep(50);
+
+                    actions.Push($"Thread {threadId}: saved document");
+                    Thread.Sleep(50);
+
+                    actions.Push($"Thread {threadId}: closed document");
+                });
+            }
+
+            Thread.Sleep(500);
+
+            Console.WriteLine("Cancel action (LIFO):\n");
+
+            UndoActions();
+        }
+
+        static void UndoActions()
+        {
+            while (!actions.IsEmpty)
+            {
+                if (actions.TryPop(out string action))
+                {
+                    Console.WriteLine($"Canceled: {action}");
+                }
+            }
+        }
+
             //var account = new BankAccount(1000);
 
             //Thread t1 = new Thread(() =>
