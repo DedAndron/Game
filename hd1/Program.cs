@@ -1,9 +1,11 @@
-﻿using System.Net.Sockets;
+﻿using System.Collections.Concurrent;
+using System.Net.Sockets;
 
 namespace SystemPrograming
 {
     internal class Program
     {
+        private static int N = 10;
         //static int count = 0;
         //static readonly object locker = new object();
         //static Mutex _mutex = new Mutex();
@@ -12,6 +14,27 @@ namespace SystemPrograming
         //task1
         static void Main(string[] args)
         {
+            ConcurrentQueue<Client> clients = new ConcurrentQueue<Client>();
+            for (int i = 0; i < N; i++)
+            {
+                int local = i;
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    clients.Enqueue(new Client($"Client {local + 1}", $"Description for Client {local + 1}"));
+                });
+                Console.WriteLine($"Client {local + 1} added to the queue");
+            }
+            Thread mainthread = new Thread(() =>
+            {
+                foreach (var client in clients)
+                {
+                    Console.WriteLine($"Processing {client.Name}");
+                    Thread.Sleep(1000);
+                }
+                Console.WriteLine("All clients processed");
+            });
+            mainthread.Start();
+            mainthread.Join();
             //var account = new BankAccount(1000);
 
             //Thread t1 = new Thread(() =>
