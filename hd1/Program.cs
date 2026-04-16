@@ -5,73 +5,167 @@ namespace SystemPrograming
 {
     internal class Program
     {
-        private static int N = 10;
+        //private static int N = 10;
         //static int count = 0;
         //static readonly object locker = new object();
         //static Mutex _mutex = new Mutex();
         //static Mutex mutex = new Mutex(false, "Global\\MyLogMutex");
 
         //task1
-        static ConcurrentStack<string> actions = new ConcurrentStack<string>();
-        static void Main(string[] args)
+        //static ConcurrentStack<string> actions = new ConcurrentStack<string>();
+        //static Semaphore semaphore = new Semaphore(1, 1);
+        static async Task Main(string[] args)
         {
-            ConcurrentQueue<Client> clients = new ConcurrentQueue<Client>();
-            for (int i = 0; i < N; i++)
+            ProductService service = new ProductService();
+
+            while (true)
             {
-                int local = i;
-                ThreadPool.QueueUserWorkItem(_ =>
+                ShowMenu();
+
+                if (!Enum.TryParse(Console.ReadLine(), out MenuOption choice))
                 {
-                    clients.Enqueue(new Client($"Client {local + 1}", $"Description for Client {local + 1}"));
-                });
-                Console.WriteLine($"Client {local + 1} added to the queue");
-            }
-            Thread mainthread = new Thread(() =>
-            {
-                foreach (var client in clients)
-                {
-                    Console.WriteLine($"Processing {client.Name}");
-                    Thread.Sleep(1000);
+                    Console.WriteLine("Wrong choice!");
+                    continue;
                 }
-                Console.WriteLine("All clients processed");
-            });
-            mainthread.Start();
-            mainthread.Join();
 
+                if (choice == MenuOption.Exit)
+                    break;
 
-            Console.WriteLine("Adding actions from different threads...");
-            for (int i = 0; i < 3; i++)
-            {
-                int threadId = i;
+                Task<string> task = null;
 
-                ThreadPool.QueueUserWorkItem(_ =>
+                switch (choice)
                 {
-                    actions.Push($"Thread {threadId}: opened document");
-                    Thread.Sleep(50);
+                    case MenuOption.AllProducts:
+                        task = service.GetAllProductsAsync();
+                        break;
 
-                    actions.Push($"Thread {threadId}: saved document");
-                    Thread.Sleep(50);
+                    case MenuOption.ProductById:
+                        Console.Write("Enter ID: ");
+                        if (int.TryParse(Console.ReadLine(), out int id))
+                        {
+                            task = service.GetProductByIdAsync(id);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Wrong ID!");
+                            continue;
+                        }
+                        break;
+                }
+                while (!task.IsCompleted)
+                {
+                    Console.Write("*");
+                    Thread.Sleep(200);
+                }
 
-                    actions.Push($"Thread {threadId}: closed document");
-                });
+                Console.WriteLine("\n\nResult:\n");
+
+                try
+                {
+                    string result = await task;
+                    Console.WriteLine(result);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                }
             }
-
-            Thread.Sleep(500);
-
-            Console.WriteLine("Cancel action (LIFO):\n");
-
-            UndoActions();
+        }
+        static void ShowMenu()
+        {
+            Console.WriteLine("\nОберіть дію:");
+            foreach (var value in Enum.GetValues(typeof(MenuOption)))
+            {
+                Console.WriteLine($"{(int)value} - {value}");
+            }
         }
 
-        static void UndoActions()
-        {
-            while (!actions.IsEmpty)
-            {
-                if (actions.TryPop(out string action))
-                {
-                    Console.WriteLine($"Canceled: {action}");
-                }
-            }
-        }
+            //    static void Work(object id)
+            //    {
+            //        Console.WriteLine($"Thread {id} чекає...");
+
+            //        bool entered = false;
+
+            //        try
+            //        {
+            //            entered = semaphore.WaitOne(10000);
+
+            //            if (!entered)
+            //            {
+            //                Console.WriteLine($"Thread {id} НЕ дочекався доступу");
+            //                return;
+            //            }
+
+            //            Console.WriteLine($"Thread {id} зайшов");
+            //            Thread.Sleep(2000);
+            //        }
+            //        finally
+            //        {
+            //            if (entered)
+            //            {
+            //                Console.WriteLine($"Thread {id} виходить");
+            //                semaphore.Release();
+            //            }
+            //        }
+            //    }
+            //    Work(10);
+            //    ConcurrentQueue<Client> clients = new ConcurrentQueue<Client>();
+            //    for (int i = 0; i < N; i++)
+            //    {
+            //        int local = i;
+            //        ThreadPool.QueueUserWorkItem(_ =>
+            //        {
+            //            clients.Enqueue(new Client($"Client {local + 1}", $"Description for Client {local + 1}"));
+            //        });
+            //        Console.WriteLine($"Client {local + 1} added to the queue");
+            //    }
+            //    Thread mainthread = new Thread(() =>
+            //    {
+            //        foreach (var client in clients)
+            //        {
+            //            Console.WriteLine($"Processing {client.Name}");
+            //            Thread.Sleep(1000);
+            //        }
+            //        Console.WriteLine("All clients processed");
+            //    });
+            //    mainthread.Start();
+            //    mainthread.Join();
+
+
+            //    Console.WriteLine("Adding actions from different threads.");
+            //    for (int i = 0; i < 3; i++)
+            //    {
+            //        int threadId = i;
+
+            //        ThreadPool.QueueUserWorkItem(_ =>
+            //        {
+            //            actions.Push($"Thread {threadId}: opened document");
+            //            Thread.Sleep(50);
+
+            //            actions.Push($"Thread {threadId}: saved document");
+            //            Thread.Sleep(50);
+
+            //            actions.Push($"Thread {threadId}: closed document");
+            //        });
+            //    }
+
+            //    Thread.Sleep(500);
+
+            //    Console.WriteLine("Cancel action (LIFO):\n");
+
+            //    UndoActions();
+            //}
+
+            //static void UndoActions()
+            //{
+            //    while (!actions.IsEmpty)
+            //    {
+            //        if (actions.TryPop(out string action))
+            //        {
+            //            Console.WriteLine($"Canceled: {action}");
+            //        }
+            //    }
+            //}
 
             //var account = new BankAccount(1000);
 
@@ -139,7 +233,7 @@ namespace SystemPrograming
             //}
 
             //Console.WriteLine("Done");
-        }
+        
         static void ProcessOrder(object state)
         {
             var data = (Tuple<int, CountdownEvent>)state;
