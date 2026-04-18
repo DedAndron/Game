@@ -24,7 +24,7 @@ namespace SystemPrograming
 
                 if (!Enum.TryParse(Console.ReadLine(), out MenuOption choice))
                 {
-                    Console.WriteLine("Wrong choice!");
+                    Console.WriteLine("Wrong Choice!");
                     continue;
                 }
 
@@ -73,7 +73,7 @@ namespace SystemPrograming
         }
         static void ShowMenu()
         {
-            Console.WriteLine("\nОберіть дію:");
+            Console.WriteLine("\nMake Choice:");
             foreach (var value in Enum.GetValues(typeof(MenuOption)))
             {
                 Console.WriteLine($"{(int)value} - {value}");

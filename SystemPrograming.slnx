@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="Examen/Examen.csproj" Id="d0b4a083-b150-4d35-8bb6-4dd03e0f4494" />
   <Project Path="Game/Game.csproj" Id="3fd7cffc-afd2-4998-8e72-78741d888ef7" />
   <Project Path="hd1/SystemPrograming.csproj" />
 </Solution>
